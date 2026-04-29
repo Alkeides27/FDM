@@ -14,6 +14,8 @@ Para garantizar la compatibilidad entre todos los miembros del equipo, el proyec
 * **Pillow:** `12.0.0` (Procesamiento de imágenes)
 * **python-dotenv:** `1.2.1` (Gestión de variables de entorno)
 * **weasyprint:** `68.1` (Generación de documentos PDF)
+* **django-ratelimit:** `4.1.0` (Protección contra fuerza bruta en login)
+* **requests:** `2.33.1` (Cliente HTTP)
 * **asgiref:** `3.11.0`
 * **sqlparse:** `0.5.4`
 * **tzdata:** `2025.2`
@@ -22,13 +24,31 @@ Para garantizar la compatibilidad entre todos los miembros del equipo, el proyec
 * **tailwindcss:** `^3.4.19` (Framework CSS utility-first)
 * **postcss:** `^8.5.6` (Herramienta de transformación CSS)
 * **autoprefixer:** `^10.4.24` (Para compatibilidad de navegadores)
+* **alpinejs:** `^3.15.8` (Framework JS ligero para interactividad)
+* **esbuild:** `^0.27.3` (Bundler de JavaScript)
+
+## 🔐 Sistema de Autenticación
+
+El sistema implementa autenticación basada en el modelo `User` nativo de Django con los siguientes niveles de acceso:
+
+| Rol | Banderas | Acceso |
+|---|---|---|
+| **Directiva / Admin** | `is_superuser=True`, `is_staff=True` | Todo (Filiación, Finanzas, Configuración, Deportivo, Administración, Logística) |
+| **Cuerpo Técnico** | `is_staff=True`, `is_superuser=False` | Solo módulos Deportivos (deportivo, parte de filiación) |
+| **Sin acceso** | `is_staff=False` | Bloqueado en login con mensaje claro |
+
+**Características de seguridad:**
+* Rate limiting por IP (5 intentos/minuto) y por usuario (10 intentos/hora)
+* Sesiones de 8 horas de duración
+* Logging de eventos de seguridad en `logs/security.log`
+* Página de error 429 personalizada para intentos excesivos
 
 ## 🚀 Guía de Instalación Paso a Paso
 
 ### 1. Clonar el Repositorio
 Abre tu terminal y clona el proyecto en tu máquina local:
 ```bash
-git clone [https://github.com/Y4nn1s/IngeniumCode-FDM](https://github.com/Y4nn1s/IngeniumCode-FDM)
+git clone https://github.com/Y4nn1s/IngeniumCode-FDM
 cd IngeniumCode-FDM
 
 ```
@@ -79,11 +99,47 @@ python manage.py migrate
 
 ```
 
-*(Opcional)* Crea tu usuario administrador para acceder al panel de Django:
+### 6. Crear Usuarios de Prueba
 
+Crea el usuario administrador (Directiva):
 ```bash
 python manage.py createsuperuser
+# user: admin_fdm | password: <segura>
+```
 
+*(Opcional)* Crea usuarios de Cuerpo Técnico y representantes para pruebas:
+```bash
+# Cuerpo Técnico (entrenador con acceso a módulos deportivos)
+python manage.py shell -c "
+from django.contrib.auth.models import User
+User.objects.create_user(
+    'entrenador1',
+    password='Entrena2026!',
+    is_staff=True,
+    first_name='Carlos',
+    last_name='Coach',
+)
+"
+
+# Usuario sin acceso (representante - bloqueado en login)
+python manage.py shell -c "
+from django.contrib.auth.models import User
+User.objects.create_user(
+    'representante1',
+    password='Rep2026!',
+    is_staff=False,
+)
+"
+```
+
+### 7. Compilar Assets Frontend
+
+```bash
+# Generar bundle de Alpine.js
+npm run build:js
+
+# Compilar Tailwind CSS (dejar corriendo en terminal aparte)
+npm run build:css
 ```
 
 ---
@@ -115,4 +171,4 @@ python manage.py runserver
 
 ```
 
-Abre tu navegador en `http://127.0.0.1:8000/` para ver la plataforma funcionando.
+Abre tu navegador en `http://127.0.0.1:8000/` — serás redirigido a `/login/` si no tienes sesión activa.

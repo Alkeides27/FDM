@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'deportivo.apps.DeportivoConfig',
     'finanzas.apps.FinanzasConfig',
     'logistica.apps.LogisticaConfig',
+
+    # Autenticación
+    'accounts.apps.AccountsConfig',
 ]
 
 MIDDLEWARE = [
@@ -49,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.RatelimitLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'project_gestion.urls'
@@ -130,3 +134,82 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# ──────────────────────────────────────────────────────────────
+# AUTH SYSTEM
+# ──────────────────────────────────────────────────────────────
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
+
+# Sesión
+SESSION_COOKIE_AGE = 60 * 60 * 8      # 8 horas
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# ──────────────────────────────────────────────────────────────
+# RATE LIMITING (django-ratelimit)
+# ──────────────────────────────────────────────────────────────
+RATELIMIT_ENABLE = True
+
+# Cache backend: locmem en dev, Redis en prod (toggle por env)
+USE_REDIS = os.getenv('USE_REDIS', 'False') == 'True'
+
+if USE_REDIS:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'ingenium-fdm-cache',
+        }
+    }
+
+# IP detection (ajustar segun deployment)
+# - Desarrollo local: comentar las siguientes lineas
+# - Detras de Nginx: 'HTTP_X_REAL_IP'
+# - Detras de Cloudflare: 'HTTP_CF_CONNECTING_IP'
+# - Detras de proxy generico: 'HTTP_X_FORWARDED_FOR'
+# RATELIMIT_IP_META_KEY = 'HTTP_X_REAL_IP'
+
+# ──────────────────────────────────────────────────────────────
+# STATIC FILES
+# ──────────────────────────────────────────────────────────────
+STATICFILES_DIRS = [
+    BASE_DIR / 'core' / 'static',
+]
+
+# ──────────────────────────────────────────────────────────────
+# LOGGING (security events)
+# ──────────────────────────────────────────────────────────────
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'security': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'security.log',
+            'formatter': 'security',
+        },
+    },
+    'loggers': {
+        'security.ratelimit': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}

@@ -1,7 +1,7 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from .models import Atleta, Representante
 from .forms import AtletaForm, RepresentanteForm
@@ -9,14 +9,20 @@ from .utils import generar_ficha_tecnica_pdf
 
 # --- Atletas ---
 
+
+@login_required
 def atleta_list(request):
     atletas = Atleta.objects.all().order_by('apellidos')
     return render(request, 'filiacion/atleta_list.html', {'atletas': atletas})
 
+
+@login_required
 def atleta_detail(request, pk):
     atleta = get_object_or_404(Atleta, pk=pk)
     return render(request, 'filiacion/atleta_detail.html', {'atleta': atleta})
 
+
+@login_required
 def atleta_create(request):
     if request.method == 'POST':
         form = AtletaForm(request.POST, request.FILES)
@@ -27,6 +33,8 @@ def atleta_create(request):
         form = AtletaForm()
     return render(request, 'filiacion/atleta_form.html', {'form': form, 'titulo': 'Nuevo Atleta'})
 
+
+@login_required
 def atleta_update(request, pk):
     atleta = get_object_or_404(Atleta, pk=pk)
     if request.method == 'POST':
@@ -38,6 +46,8 @@ def atleta_update(request, pk):
         form = AtletaForm(instance=atleta)
     return render(request, 'filiacion/atleta_form.html', {'form': form, 'titulo': f'Editar {atleta.nombres}'})
 
+
+@login_required
 def atleta_delete(request, pk):
     atleta = get_object_or_404(Atleta, pk=pk)
     if request.method == 'POST':
@@ -47,10 +57,14 @@ def atleta_delete(request, pk):
 
 # --- Representantes ---
 
+
+@login_required
 def representante_list(request):
     representantes = Representante.objects.all().order_by('apellidos')
     return render(request, 'filiacion/representante_list.html', {'representantes': representantes})
 
+
+@login_required
 def representante_create(request):
     if request.method == 'POST':
         form = RepresentanteForm(request.POST)
@@ -61,10 +75,14 @@ def representante_create(request):
         form = RepresentanteForm()
     return render(request, 'filiacion/representante_form.html', {'form': form, 'titulo': 'Nuevo Representante'})
 
+
+@login_required
 def representante_detail(request, pk):
     representante = get_object_or_404(Representante, pk=pk)
     return render(request, 'filiacion/representante_detail.html', {'representante': representante})
 
+
+@login_required
 def representante_update(request, pk):
     representante = get_object_or_404(Representante, pk=pk)
     if request.method == 'POST':

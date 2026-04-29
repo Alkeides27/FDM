@@ -28,3 +28,9 @@ Contexto Documento PST.md
 
 # Agent config (local only)
 .agent/
+
+# Logs
+logs/
+
+# Others
+PRD v2.1.md

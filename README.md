@@ -175,12 +175,14 @@ Abre tu navegador en `http://127.0.0.1:8000/` — serás redirigido a `/login/` 
 
 ---
 
-## 📋 Generar Mensualidades
+## 💰 Módulo de Pagos
 
-**Generar mensualidades cada mes:** ejecutar `python manage.py generar_mensualidades` el primer día de cada mes. Idempotente — si ya existen, no las duplica. En producción puede automatizarse con cron o systemd timer.
+### Variables de entorno requeridas
+- `TELEGRAM_BOT_TOKEN` — obtener vía @BotFather en Telegram
 
+### Comandos importantes
 ```bash
-# Mes actual
+# Generar mensualidades del mes actual (idempotente)
 python manage.py generar_mensualidades
 
 # Mes específico
@@ -188,4 +190,20 @@ python manage.py generar_mensualidades --mes 4 --anio 2026
 
 # Con monto personalizado
 python manage.py generar_mensualidades --monto 20.00
+
+# Crear tabla de cache para rate limiting (solo la primera vez)
+python manage.py createcachetable
 ```
+
+### Asociación de representante a Telegram
+- **Opción manual:** el admin pega el `chat_id` desde Django admin → Representantes.
+- **Opción webhook:** configurar webhook con HTTPS público y representante envía `/start CEDULA` al bot.
+
+### Permisos
+Solo `is_staff` o miembros del grupo `Tesoreria` acceden a la bandeja administrativa de pagos.
+
+### Flujo de pagos
+1. Representante accede a `/finanzas/reportar/`, selecciona mensualidades, sube comprobante.
+2. Admin revisa en `/finanzas/admin/bandeja/`, ingresa tasa BCV y aprueba o rechaza.
+3. Al aprobar: se calcula USD, se marcan mensualidades como pagadas, se notifica por Telegram.
+4. Al rechazar: las mensualidades se liberan para otro pago, se notifica con motivo.

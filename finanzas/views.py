@@ -1,6 +1,7 @@
 # finanzas/views.py
 import hashlib
 import json
+from decimal import Decimal, ROUND_HALF_UP
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
@@ -10,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django_ratelimit.decorators import ratelimit
 
-from .models import Pago, Mensualidad, PagoAuditLog
+from .models import Pago, Mensualidad, PagoAuditLog, TOLERANCIA_COBERTURA_USD
 from .forms import ReportarPagoForm, AprobarPagoForm, RechazarPagoForm
 from .telegram_bot import notificar_representante, enviar_mensaje
 
@@ -183,16 +184,39 @@ def aprobar(request, pk):
     if request.method == 'POST':
         form = AprobarPagoForm(request.POST)
         if form.is_valid():
+            tasa = form.cleaned_data['tasa_bcv']
+
+            # Calcular monto USD que se obtendría con esta tasa
+            monto_usd_calculado = (pago.monto_bs / tasa).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+
+            # Validar cobertura contra mensualidades vinculadas
+            mensualidades = pago.mensualidades_cubiertas.all()
+            total_esperado = sum(
+                (m.monto_usd for m in mensualidades),
+                Decimal('0.00')
+            )
+
+            if mensualidades.exists() and monto_usd_calculado < (total_esperado - TOLERANCIA_COBERTURA_USD):
+                faltante = (total_esperado - monto_usd_calculado).quantize(Decimal('0.01'))
+                messages.error(
+                    request,
+                    f'Cobertura insuficiente. Pago = {monto_usd_calculado} USD, '
+                    f'mensualidades = {total_esperado} USD. '
+                    f'Faltan {faltante} USD. Rechaza el pago o solicita complemento.'
+                )
+                return redirect('finanzas:detalle', pk=pk)
+
             with transaction.atomic():
                 estado_anterior = pago.estado
-                pago.tasa_bcv = form.cleaned_data['tasa_bcv']
+                pago.tasa_bcv = tasa
                 pago.estado = 'APROBADO'
                 pago.revisado_por = request.user
                 pago.revisado_en = timezone.now()
                 pago.save()
 
-                # Marcar mensualidades vinculadas como pagadas
-                mensualidades = pago.mensualidades_cubiertas.all()
+                # Marcar mensualidades vinculadas como pagadas (cobertura validada)
                 for m in mensualidades:
                     m.pagada = True
                     m.save()
@@ -206,6 +230,7 @@ def aprobar(request, pk):
                     detalles={
                         'tasa_bcv': str(pago.tasa_bcv),
                         'monto_usd': str(pago.monto_usd),
+                        'total_esperado_usd': str(total_esperado),
                         'mensualidades_pagadas': [m.id for m in mensualidades],
                     }
                 )
@@ -217,12 +242,9 @@ def aprobar(request, pk):
                         detalles={'count': mensualidades.count()}
                     )
 
-            notificar_representante(
-                pago.representante,
-                f'✅ Tu pago #{pago.id} de {pago.monto_bs} Bs '
-                f'({pago.monto_usd} USD) fue APROBADO.\n'
-                f'Concepto: {pago.concepto}'
-            )
+            from .telegram_bot import notificar_pago_aprobado
+            notificar_pago_aprobado(pago)
+
             messages.success(request, f'Pago #{pago.id} aprobado.')
         else:
             messages.error(request, 'Tasa BCV inválida.')

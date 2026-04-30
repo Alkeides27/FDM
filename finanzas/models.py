@@ -59,6 +59,29 @@ TIPO_APORTE_CHOICES = [
 ]
 
 
+# === Modelo TasaBCV (cache local) ===
+class TasaBCV(models.Model):
+    """Cache local de la tasa BCV. Una fila por fecha."""
+    fecha = models.DateField(unique=True, db_index=True)
+    tasa = models.DecimalField(
+        max_digits=12, decimal_places=4,
+        help_text="Bolívares por USD"
+    )
+    fuente = models.CharField(
+        max_length=20, default='dolarapi',
+        help_text="Origen: dolarapi, manual, etc."
+    )
+    capturada_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = 'Tasa BCV'
+        verbose_name_plural = 'Tasas BCV'
+
+    def __str__(self):
+        return f"{self.fecha}: {self.tasa} Bs/USD ({self.fuente})"
+
+
 # === Modelo Mensualidad ===
 class Mensualidad(models.Model):
     """Cada mensualidad que un atleta debe pagar. Una fila por mes por atleta."""

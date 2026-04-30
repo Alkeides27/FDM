@@ -1,6 +1,6 @@
 # finanzas/admin.py
 from django.contrib import admin
-from .models import Pago, PagoAuditLog, Mensualidad, Patrocinante, Aporte
+from .models import Pago, PagoAuditLog, Mensualidad, Patrocinante, Aporte, TasaBCV
 
 
 class PagoAuditLogInline(admin.TabularInline):
@@ -71,3 +71,11 @@ class PatrocinanteAdmin(admin.ModelAdmin):
 class AporteAdmin(admin.ModelAdmin):
     list_display = ('patrocinante', 'fecha_aporte', 'tipo', 'valor_estimado_usd')
     list_filter = ('tipo', 'fecha_aporte')
+
+
+@admin.register(TasaBCV)
+class TasaBCVAdmin(admin.ModelAdmin):
+    list_display = ('fecha', 'tasa', 'fuente', 'capturada_en')
+    list_filter = ('fuente',)
+    date_hierarchy = 'fecha'
+    ordering = ('-fecha',)

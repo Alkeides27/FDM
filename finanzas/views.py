@@ -282,11 +282,8 @@ def rechazar(request, pk):
                     detalles={'motivo': pago.motivo_rechazo}
                 )
 
-            notificar_representante(
-                pago.representante,
-                f'❌ Tu pago #{pago.id} fue RECHAZADO.\n'
-                f'Motivo: {pago.motivo_rechazo}'
-            )
+            from .telegram_bot import notificar_pago_rechazado
+            notificar_pago_rechazado(pago)
             messages.success(request, f'Pago #{pago.id} rechazado.')
         else:
             messages.error(request, 'Motivo de rechazo requerido.')

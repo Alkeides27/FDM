@@ -45,7 +45,13 @@ def validar_telefono_venezolano(value):
 
 # === Formularios ===
 class StaffOnlyAuthenticationForm(AuthenticationForm):
-    """Login restringido a usuarios con is_staff=True."""
+    """
+    Login restringido a:
+    - Usuarios staff (personal interno: tesorería, coordinadores, entrenadores)
+    - Representantes registrados (con perfil Representante asociado)
+
+    Rechaza usuarios huérfanos sin rol ni perfil.
+    """
 
     error_messages = {
         **AuthenticationForm.error_messages,
@@ -53,17 +59,23 @@ class StaffOnlyAuthenticationForm(AuthenticationForm):
             'Credenciales incorrectas. Verifica tu usuario y contraseña.'
         ),
         'inactive': 'Esta cuenta está desactivada.',
-        'no_staff': 'Esta cuenta no tiene acceso a la plataforma interna.',
+        'no_staff': ('Esta cuenta no tiene un rol asignado. ' 
+                     'Contacta al administrador.')
     }
 
     def confirm_login_allowed(self, user):
         super().confirm_login_allowed(user)
-        if not user.is_staff:
+
+        es_staff = user.is_staff
+        es_representante = (
+            hasattr(user, 'representante') and user.representante is not None
+        )
+
+        if not (es_staff or es_representante):
             raise ValidationError(
                 self.error_messages['no_staff'],
                 code='no_staff',
             )
-
 
 class RepresentanteSignUpForm(UserCreationForm):
     """

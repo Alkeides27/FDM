@@ -3,7 +3,7 @@ import hashlib
 import json
 from decimal import Decimal, ROUND_HALF_UP
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db import IntegrityError, transaction
@@ -11,20 +11,18 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django_ratelimit.decorators import ratelimit
 
+from accounts.decorators import (
+    tesoreria_required, representante_required, cualquier_grupo_requerido
+)
+
 from .models import Pago, Mensualidad, PagoAuditLog, TOLERANCIA_COBERTURA_USD
 from .forms import ReportarPagoForm, AprobarPagoForm, RechazarPagoForm
 from .telegram_bot import notificar_representante, enviar_mensaje
 
 
-def es_admin(u):
-    return u.is_authenticated and (
-        u.is_staff or u.groups.filter(name='Tesoreria').exists()
-    )
-
-
 # === Vistas del representante ===
 
-@login_required
+@representante_required
 @ratelimit(key='user', rate='5/h', method='POST', block=True)
 def reportar_pago(request):
     if not hasattr(request.user, 'representante') or request.user.representante is None:
@@ -106,7 +104,7 @@ def reportar_pago(request):
     })
 
 
-@login_required
+@representante_required
 def mis_pagos(request):
     if not hasattr(request.user, 'representante') or request.user.representante is None:
         messages.error(request, 'Tu usuario no está asociado a un representante.')
@@ -126,7 +124,7 @@ def mis_pagos(request):
 
 # === Vistas del administrador ===
 
-@user_passes_test(es_admin)
+@cualquier_grupo_requerido('Tesoreria', 'CoordinadorGeneral')
 def bandeja_admin(request):
     estado = request.GET.get('estado', 'PENDIENTE')
     if estado not in ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'TODOS']:
@@ -143,10 +141,10 @@ def bandeja_admin(request):
     })
 
 
-@user_passes_test(es_admin)
+@cualquier_grupo_requerido('Tesoreria', 'CoordinadorGeneral')
 def detalle_admin(request, pk):
     pago = get_object_or_404(Pago, pk=pk)
-    audit = pago.audit_log.all()[:20]
+    audit = pago.audit_log.select_related('actor').all()[:20]
     mensualidades = pago.mensualidades_cubiertas.all()
     total_esperado_usd = sum(
         (m.monto_usd for m in mensualidades),
@@ -179,7 +177,7 @@ def detalle_admin(request, pk):
     })
 
 
-@user_passes_test(es_admin)
+@tesoreria_required
 @ratelimit(key='user', rate='30/m', method='POST', block=True)
 def aprobar(request, pk):
     pago = get_object_or_404(Pago, pk=pk)
@@ -258,7 +256,7 @@ def aprobar(request, pk):
     return redirect('finanzas:bandeja')
 
 
-@user_passes_test(es_admin)
+@tesoreria_required
 @ratelimit(key='user', rate='30/m', method='POST', block=True)
 def rechazar(request, pk):
     pago = get_object_or_404(Pago, pk=pk)

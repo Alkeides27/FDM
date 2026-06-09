@@ -28,6 +28,9 @@ Contexto Documento PST.md
 
 # Agent config (local only)
 .agent/
+.gemini
+.impeccable
+docs
 
 # Logs
 logs/*
@@ -36,3 +39,5 @@ logs/*
 # Others
 PRD v2.1.md
 PRD v3.md
+PRODUCT.md
+DESIGN.md

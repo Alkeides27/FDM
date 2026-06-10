@@ -33,9 +33,9 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
     <!-- Card: Gestión Deportiva -->
-    <div class="bg-gradient-to-br from-fdm-blue to-fdm-blue-dark rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-l-4 border-fdm-red">
-        <h3 class="text-xl font-semibold text-white mb-3">⚽ Gestión Deportiva</h3>
-        <p class="text-slate-200 mb-4">Administra partidos, estadísticas y resultados.</p>
+    <div class="bg-white dark:bg-[#0a0a0a] rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border border-slate-200 dark:border-slate-700">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Gestión Deportiva</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Administra partidos, estadísticas y resultados.</p>
         <a href="{% url 'partido_list' %}" 
            class="inline-block bg-fdm-red text-white px-5 py-2 rounded-lg hover:bg-fdm-red-dark focus:outline-none focus:ring-2 focus:ring-fdm-red focus:ring-opacity-50 transition-colors duration-300">
             Ver Partidos
@@ -43,25 +43,25 @@
     </div>
 
     <!-- Card: Gestión de Atletas -->
-    <div class="bg-gradient-to-br from-fdm-red to-fdm-red-dark rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-l-4 border-fdm-blue">
-        <h3 class="text-xl font-semibold text-white mb-3">🏃‍♂️ Gestión de Atletas</h3>
-        <p class="text-slate-100 mb-4">Registra nuevos atletas, actualiza fichas y consulta perfiles.</p>
+    <div class="bg-white dark:bg-[#0a0a0a] rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border border-slate-200 dark:border-slate-700">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Gestión de Atletas</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Registra nuevos atletas, actualiza fichas y consulta perfiles.</p>
         <div class="flex flex-wrap gap-2">
             <a href="{% url 'atleta_list' %}" 
                class="inline-block bg-fdm-blue text-white px-5 py-2 rounded-lg hover:bg-fdm-blue-dark focus:outline-none focus:ring-2 focus:ring-fdm-blue focus:ring-opacity-50 transition-colors duration-300">
                 Ver Atletas
             </a>
             <a href="{% url 'atleta_create' %}" 
-               class="inline-block bg-white text-fdm-red px-5 py-2 rounded-lg hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-colors duration-300 font-semibold">
+               class="inline-block border border-fdm-red text-fdm-red hover:bg-fdm-red/10 dark:text-red-400 dark:border-red-400 px-5 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-fdm-red focus:ring-opacity-50 transition-colors duration-300 font-semibold">
                 Nuevo Atleta
             </a>
         </div>
     </div>
 
     <!-- Card: Gestión de Representantes -->
-    <div class="bg-gradient-to-br from-fdm-blue to-fdm-blue-dark rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-l-4 border-fdm-red">
-        <h3 class="text-xl font-semibold text-white mb-3">👨‍👩‍👦 Gestión de Representantes</h3>
-        <p class="text-slate-200 mb-4">Base de datos de padres y representantes.</p>
+    <div class="bg-white dark:bg-[#0a0a0a] rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border border-slate-200 dark:border-slate-700">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Gestión de Representantes</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Base de datos de padres y representantes.</p>
         <a href="{% url 'representante_list' %}" 
            class="inline-block bg-fdm-red text-white px-5 py-2 rounded-lg hover:bg-fdm-red-dark focus:outline-none focus:ring-2 focus:ring-fdm-red focus:ring-opacity-50 transition-colors duration-300">
             Ver Representantes
@@ -70,9 +70,9 @@
 
     <!-- Card: Cuerpo Técnico (Solo staff/admin) -->
     {% if user.is_staff or user.is_superuser %}
-    <div class="bg-gradient-to-br from-fdm-red to-fdm-red-dark rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-l-4 border-fdm-blue">
-        <h3 class="text-xl font-semibold text-white mb-3">🏅 Cuerpo Técnico</h3>
-        <p class="text-slate-100 mb-4">Gestión de entrenadores y personal técnico de la escuela.</p>
+    <div class="bg-white dark:bg-[#0a0a0a] rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border border-slate-200 dark:border-slate-700">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Cuerpo Técnico</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Gestión de entrenadores y personal técnico de la escuela.</p>
         <a href="{% url 'entrenador_list' %}" 
            class="inline-block bg-fdm-blue text-white px-5 py-2 rounded-lg hover:bg-fdm-blue-dark focus:outline-none focus:ring-2 focus:ring-fdm-blue focus:ring-opacity-50 transition-colors duration-300">
             Ver Entrenadores
@@ -82,9 +82,9 @@
 
     <!-- Card: Administración (Solo staff/admin) -->
     {% if user.is_staff or user.is_superuser %}
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-l-4 border-fdm-blue">
-        <h3 class="text-xl font-semibold text-fdm-blue dark:text-blue-400 mb-3">⚙️ Administración</h3>
-        <p class="text-gray-600 dark:text-gray-300 mb-4">Panel avanzado para coordinadores y configuración.</p>
+    <div class="bg-white dark:bg-[#0a0a0a] rounded-xl shadow-lg p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border border-slate-200 dark:border-slate-700">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Administración</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Panel avanzado para coordinadores y configuración.</p>
         <a href="/admin/" 
            class="inline-block bg-fdm-blue text-white px-5 py-2 rounded-lg hover:bg-fdm-blue-dark focus:outline-none focus:ring-2 focus:ring-fdm-blue focus:ring-opacity-50 transition-colors duration-300">
             Ir al Admin

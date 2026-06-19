@@ -26,11 +26,15 @@ npx tailwindcss -i ./core/static/css/input.css -o ./core/static/css/output.css -
 echo "Compilando archivos JavaScript con esbuild..."
 npm run build:js
 
-# 6. Recopilar archivos estáticos de Django en el STATIC_ROOT (staticfiles)
+# 6. Ejecutar migraciones de Django (requiere variables de entorno de la DB)
+echo "Ejecutando migraciones de Django..."
+python3 manage.py migrate --noinput
+
+# 7. Recopilar archivos estáticos de Django en el STATIC_ROOT (staticfiles)
 echo "Ejecutando collectstatic..."
 python3 manage.py collectstatic --noinput --clear
 
-# 7. Desactivar y eliminar el entorno virtual temporal para no subirlo a producción
+# 8. Desactivar y eliminar el entorno virtual temporal para no subirlo a producción
 echo "Limpiando entorno virtual temporal..."
 deactivate
 rm -rf temp_venv

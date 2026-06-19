@@ -17,7 +17,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-clave-temporal')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
+if os.getenv('ALLOWED_HOSTS'):
+    ALLOWED_HOSTS.extend(os.getenv('ALLOWED_HOSTS').split(','))
 
 
 # Application definition
@@ -45,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -81,11 +84,11 @@ WSGI_APPLICATION = 'project_gestion.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': os.getenv('POSTGRES_DATABASE') or os.getenv('DB_NAME'),
+        'USER': os.getenv('POSTGRES_USER') or os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD') or os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST') or os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('POSTGRES_PORT') or os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -125,6 +128,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -188,6 +201,19 @@ STATICFILES_DIRS = [
 # ──────────────────────────────────────────────────────────────
 # LOGGING (Security & Finanzas Bot Integrados)
 # ──────────────────────────────────────────────────────────────
+IS_VERCEL = os.getenv('VERCEL') == '1'
+
+SECURITY_HANDLER_CONFIG = {
+    'level': 'INFO',
+    'class': 'logging.StreamHandler',
+    'formatter': 'security',
+} if IS_VERCEL else {
+    'level': 'INFO',
+    'class': 'logging.FileHandler',
+    'filename': BASE_DIR / 'logs' / 'security.log',
+    'formatter': 'security',
+}
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -198,26 +224,17 @@ LOGGING = {
         },
     },
     'handlers': {
-
-        'security_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'security.log',
-            'formatter': 'security',
-        },
-
+        'security_file': SECURITY_HANDLER_CONFIG,
         'console': {
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
-
         'security.ratelimit': {
             'handlers': ['security_file'],
             'level': 'INFO',
             'propagate': False,
         },
-
         'finanzas.telegram_bot': {
             'handlers': ['console'],
             'level': 'WARNING',

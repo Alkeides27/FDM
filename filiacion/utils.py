@@ -1,7 +1,8 @@
+
+
 from django.template.loader import render_to_string
 from django.db.models import Sum, Count
 from django.conf import settings
-from weasyprint import HTML
 from .models import Atleta
 from deportivo.models import EvaluacionTecnica, EvaluacionPsicosocial
 
@@ -60,6 +61,13 @@ def generar_ficha_tecnica_pdf(atleta_id, eval_tecnica_id=None, eval_psicosocial_
     html_string = render_to_string('filiacion/reports/ficha_tecnica_pdf.html', contexto)
     
     # Generar el PDF
+    try:
+        from weasyprint import HTML
+    except (ImportError, OSError) as e:
+        raise ImportError(
+            "WeasyPrint no está disponible o carece de las bibliotecas del sistema necesarias (como Cairo/Pango)."
+        ) from e
+    
     pdf_bytes = HTML(string=html_string).write_pdf()
     
     return pdf_bytes

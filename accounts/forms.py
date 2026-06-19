@@ -19,20 +19,19 @@ INPUT_CSS = (
 
 
 # === Validadores ===
-CEDULA_REGEX = re.compile(r'^\d{8}$')
+CEDULA_REGEX = re.compile(r'^\d{6,9}$')
 TELEFONO_REGEX = re.compile(r'^0(412|414|416|424|426)\d{7}$')
 
 
 def validar_cedula_venezolana(value):
-    """8 dígitos numéricos exactos."""
+    """6 a 9 dígitos numéricos."""
     if not CEDULA_REGEX.match(value):
         raise ValidationError(
-            'La cédula debe tener exactamente 8 dígitos. Ej: 12345678'
+            'La cédula debe tener entre 6 y 9 dígitos. Ej: 1234567'
         )
 
 
-def validar_telefono_venezolano(value):
-    """11 dígitos exactos comenzando con operadora venezolana."""
+""" def validar_telefono_venezolano(value):
     if not value.isdigit():
         raise ValidationError('El teléfono debe contener solo números.')
     if len(value) != 11:
@@ -40,8 +39,16 @@ def validar_telefono_venezolano(value):
     if not TELEFONO_REGEX.match(value):
         raise ValidationError(
             'Operadora inválida. Debe iniciar con 0412, 0414, 0416, 0424 o 0426.'
-        )
+        ) """
 
+
+OPERADORAS_VENEZOLANAS = [
+    ('0412', '0412'),
+    ('0414', '0414'),
+    ('0416', '0416'),
+    ('0424', '0424'),
+    ('0426', '0426'),
+]
 
 # === Formularios ===
 class StaffOnlyAuthenticationForm(AuthenticationForm):
@@ -87,22 +94,27 @@ class RepresentanteSignUpForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         self.fields['password1'].widget.attrs.update({'class': INPUT_CSS})
         self.fields['password2'].widget.attrs.update({'class': INPUT_CSS})
+        self.fields['password1'].help_text = (
+            'Mínimo 8 caracteres. Combina letras, números y al menos un símbolo. '
+            'Evita usar tu cédula, nombre o palabras comunes.'
+        )
+        self.fields['password2'].help_text = 'Repite la misma contraseña para confirmar.'
 
     cedula_identidad = forms.CharField(
-        max_length=8, min_length=8, required=True,
+        max_length=9, min_length=6, required=True,
         label='Cédula de Identidad',
-        help_text='8 dígitos numéricos. Ej: 12345678',
+        help_text='Entre 6 y 9 dígitos numéricos.',
         validators=[validar_cedula_venezolana],
         widget=forms.TextInput(attrs={
             'class': INPUT_CSS,
             'placeholder': '12345678',
             'autocomplete': 'username',
-            'maxlength': '8',
-            'minlength': '8',
-            'pattern': r'\d{8}',
+            'maxlength': '9',
+            'minlength': '6',
+            'pattern': r'\d{6,9}',
             'inputmode': 'numeric',
-            'title': 'Exactamente 8 dígitos numéricos',
-            'oninput': "this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8)",
+            'title': 'Entre 6 y 9 dígitos numéricos',
+            'oninput': "this.value = this.value.replace(/[^0-9]/g, '').slice(0, 9)",
         }),
     )
     nombres = forms.CharField(
@@ -132,21 +144,28 @@ class RepresentanteSignUpForm(UserCreationForm):
             'oninput': "this.value = this.value.slice(0, 120)",
         }),
     )
-    telefono_principal = forms.CharField(
-        max_length=11, min_length=11, required=True,
-        label='Teléfono Principal',
-        help_text='11 dígitos. Ej: 04141234567',
-        validators=[validar_telefono_venezolano],
+    codigo_operadora = forms.ChoiceField(
+        choices=OPERADORAS_VENEZOLANAS,
+        required=True,
+        label='Operadora',
+        widget=forms.Select(attrs={
+            'class': INPUT_CSS,
+        }),
+    )
+    numero_telefono = forms.CharField(
+        max_length=7, min_length=7, required=True,
+        label='Número',
+        help_text='7 dígitos numéricos. Ej: 1234567',
         widget=forms.TextInput(attrs={
             'class': INPUT_CSS,
-            'placeholder': '04141234567',
-            'autocomplete': 'tel',
-            'maxlength': '11',
-            'minlength': '11',
-            'pattern': r'\d{11}',
+            'placeholder': '1234567',
+            'autocomplete': 'tel-national',
+            'maxlength': '7',
+            'minlength': '7',
+            'pattern': r'\d{7}',
             'inputmode': 'numeric',
-            'title': 'Exactamente 11 dígitos. Ej: 04141234567',
-            'oninput': "this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)",
+            'title': 'Exactamente 7 dígitos numéricos',
+            'oninput': "this.value = this.value.replace(/[^0-9]/g, '').slice(0, 7)",
         }),
     )
     direccion_habitacion = forms.CharField(
@@ -163,8 +182,8 @@ class RepresentanteSignUpForm(UserCreationForm):
         model = User
         fields = (
             'cedula_identidad', 'nombres', 'apellidos',
-            'correo_electronico', 'telefono_principal', 'direccion_habitacion',
-            'password1', 'password2',
+            'correo_electronico', 'codigo_operadora', 'numero_telefono',
+            'direccion_habitacion', 'password1', 'password2',
         )
 
     def clean_cedula_identidad(self):
@@ -182,12 +201,22 @@ class RepresentanteSignUpForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             raise ValidationError('Ya existe una cuenta con este correo.')
         return email
+    
+    def clean(self):
+        cleaned = super().clean()
+        codigo = cleaned.get('codigo_operadora')
+        numero = cleaned.get('numero_telefono')
+        if codigo and numero:
+            cleaned['telefono_principal'] = codigo + numero
+        return cleaned
 
     @transaction.atomic
     def save(self, commit=True):
         cedula = self.cleaned_data['cedula_identidad']
         email = self.cleaned_data['correo_electronico']
-        telefono = self.cleaned_data['telefono_principal']
+        telefono = self.cleaned_data.get('telefono_principal') or (
+            self.cleaned_data['codigo_operadora'] + self.cleaned_data['numero_telefono']
+        )
 
         user = super().save(commit=False)
         user.username = cedula

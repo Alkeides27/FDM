@@ -1,6 +1,8 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,123 +10,166 @@
     <!-- CSS compilado de Tailwind CSS v3.4 (local) -->
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <script src="{% static 'js/bundle.js' %}" defer></script>
-    <link rel="icon" type="image/png" href="{% static 'img/logo_escuela.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16x16.png' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'img/site.webmanifest' %}">
+<meta name="theme-color" content="#1E4380">
     <style>[x-cloak] { display: none !important; }</style>
     <script>if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark') } else { document.documentElement.classList.remove('dark') }</script>
 </head>
-<body class="bg-slate-200 text-gray-800 dark:bg-slate-900 dark:text-gray-100 font-sans flex flex-col min-h-screen transition-colors duration-300" x-data="{ darkMode: document.documentElement.classList.contains('dark') }">
+
+
+<body class="bg-slate-200 text-gray-800 dark:bg-slate-900 dark:text-gray-100 font-sans flex flex-col min-h-screen transition-colors duration-300" x-data="{ darkMode: document.documentElement.classList.contains('dark'), mobileMenuOpen: false }">
 
 <!-- Navbar con identidad FDM -->
 <header class="bg-gradient-to-r from-fdm-blue via-fdm-blue-dark to-fdm-red dark:from-fdm-blue-dark dark:via-slate-900 dark:to-fdm-red-dark shadow-lg sticky top-0 z-10">
-    <div class="container mx-auto px-4 md:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+    <div class="container mx-auto px-4 md:px-6 py-3 flex flex-wrap justify-between items-center gap-4">
         <!-- Logo y nombre -->
         <a href="{% url 'dashboard' %}" class="flex items-center gap-3 hover:opacity-90 transition duration-300">
             <img src="{% static 'img/emblema_fdm.png' %}" alt="FDM" class="w-10 h-10 md:w-12 md:h-12 drop-shadow-lg">
             <div class="text-white">
-                <h1 class="text-lg md:text-xl font-bold leading-tight">Francisco de Miranda FC</h1>
-                <p class="text-xs text-slate-200 italic hidden sm:block">¡Vamos que Vamos!</p>
+                <h1 class="text-xl md:text-2xl font-extrabold tracking-tight leading-tight">Francisco de Miranda FC</h1>
+                <p class="text-[11px] md:text-xs text-slate-300 font-semibold tracking-wider uppercase hidden sm:block">¡Vamos que Vamos!</p>
             </div>
         </a>
         
-        <!-- Navegación -->
-        <nav>
-            <ul class="flex flex-wrap justify-center items-center gap-2 md:gap-4">
+        <!-- Hamburger Button para Móvil (visible en md:hidden) -->
+        <button @click="mobileMenuOpen = !mobileMenuOpen" 
+                class="md:hidden text-white focus:outline-none p-2 rounded-md hover:bg-white/10 transition duration-150 min-w-[44px] min-h-[44px] flex items-center justify-center" 
+                aria-label="Toggle menu" 
+                :aria-expanded="mobileMenuOpen.toString()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                <path x-show="mobileMenuOpen" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        
+        <!-- Navegación Escritorio (hidden en md, block en md:block) -->
+        <nav class="hidden md:block">
+            <ul class="flex flex-wrap justify-center items-center gap-2 md:gap-3">
+
+                {# === Inicio === #}
                 <li>
                     <a href="{% url 'dashboard' %}"
-                       class="text-white hover:text-fdm-red font-semibold transition duration-300 px-2 py-1 rounded hover:bg-white/10">
+                    class="text-white hover:text-white font-semibold transition duration-300 px-3 py-2 rounded-md hover:bg-white/15">
                         Inicio
                     </a>
                 </li>
 
-                {# === Atletas: visible para todos los autenticados === #}
-                <li>
-                    <a href="{% url 'atleta_list' %}"
-                       class="text-white hover:text-fdm-red font-semibold transition duration-300 px-2 py-1 rounded hover:bg-white/10">
-                        {% if is_representante and not is_admin_total and not is_tesoreria and not is_coord_general and not is_coord_deportivo and not is_entrenador %}
-                            Mi Atleta
-                        {% else %}
-                            Atletas
-                        {% endif %}
-                    </a>
-                </li>
+                {# === Dropdown: Gestión Deportiva === #}
+                {% if is_admin_total or is_coord_general or is_coord_deportivo or is_entrenador or is_representante %}
+                <li x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" @click.away="open = false"
+                            class="flex items-center gap-1 text-white hover:text-white font-semibold transition duration-300 px-3 py-2 rounded-md hover:bg-white/15">
+                        Gestión Deportiva
+                        <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 -translate-y-1"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        class="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50">
 
-                {# === Representantes: solo staff interno === #}
+                        <a href="{% url 'atleta_list' %}"
+                        class="block px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-fdm-blue/10 hover:text-fdm-blue dark:hover:bg-fdm-blue/20 dark:hover:text-blue-400 transition-colors">
+                            {% if is_representante and not is_admin_total and not is_coord_general and not is_coord_deportivo and not is_entrenador %}
+                                Mi Atleta
+                            {% else %}
+                                Atletas
+                            {% endif %}
+                        </a>
+
+                        <a href="{% url 'partido_list' %}"
+                        class="block px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-fdm-blue/10 hover:text-fdm-blue dark:hover:bg-fdm-blue/20 dark:hover:text-blue-400 transition-colors">
+                            Partidos
+                        </a>
+
+                        {% if is_admin_total or is_coord_general or is_coord_deportivo or is_entrenador %}
+                        <a href="{% url 'estadisticas_panel' %}"
+                        class="block px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-fdm-blue/10 hover:text-fdm-blue dark:hover:bg-fdm-blue/20 dark:hover:text-blue-400 transition-colors">
+                            Estadísticas
+                        </a>
+                        {% endif %}
+
+                        {% if is_admin_total or is_coord_general or is_coord_deportivo or is_entrenador %}
+                        <a href="{% url 'entrenador_list' %}"
+                        class="block px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-fdm-blue/10 hover:text-fdm-blue dark:hover:bg-fdm-blue/20 dark:hover:text-blue-400 transition-colors">
+                            Cuerpo Técnico
+                        </a>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endif %}
+
+                {# === Representantes (suelto, no dropdown todavía) === #}
                 {% if is_admin_total or is_coord_general or is_coord_deportivo or is_tesoreria %}
                 <li>
                     <a href="{% url 'representante_list' %}"
-                       class="text-white hover:text-fdm-red font-semibold transition duration-300 px-2 py-1 rounded hover:bg-white/10">
+                    class="text-white hover:text-white font-semibold transition duration-300 px-3 py-2 rounded-md hover:bg-white/15">
                         Representantes
                     </a>
                 </li>
                 {% endif %}
 
-                {# === Partidos: visible para todos los autenticados === #}
-                <li>
-                    <a href="{% url 'partido_list' %}"
-                       class="text-white hover:text-fdm-red font-semibold transition duration-300 px-2 py-1 rounded hover:bg-white/10">
-                        Partidos
-                    </a>
-                </li>
+                {# === Dropdown: Finanzas === #}
+                {% if is_admin_total or is_tesoreria or is_coord_general or is_representante %}
+                <li x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" @click.away="open = false"
+                            class="flex items-center gap-1 text-white hover:text-white font-semibold transition duration-300 px-3 py-2 rounded-md hover:bg-white/15">
+                        Finanzas
+                        <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 -translate-y-1"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        class="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50">
 
-                {# === Cuerpo Técnico: solo staff interno === #}
-                {% if is_admin_total or is_coord_general or is_coord_deportivo or is_entrenador %}
-                <li>
-                    <a href="{% url 'entrenador_list' %}"
-                       class="text-white hover:text-fdm-red font-semibold transition duration-300 px-2 py-1 rounded hover:bg-white/10">
-                        Cuerpo Técnico
-                    </a>
-                </li>
-                {% endif %}
+                        {% if is_representante %}
+                        <a href="{% url 'finanzas:mis_pagos' %}"
+                        class="block px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-fdm-blue/10 hover:text-fdm-blue dark:hover:bg-fdm-blue/20 dark:hover:text-blue-400 transition-colors">
+                            Mis Pagos
+                        </a>
+                        {% endif %}
 
-                {# === Estadísticas: solo gestión deportiva === #}
-                {% if is_admin_total or is_coord_general or is_coord_deportivo or is_entrenador %}
-                <li>
-                    <a href="{% url 'estadisticas_panel' %}"
-                       class="text-white hover:text-fdm-red font-semibold transition duration-300 px-2 py-1 rounded hover:bg-white/10">
-                        Estadísticas
-                    </a>
-                </li>
-                {% endif %}
-
-                {# === Mis Pagos: solo representantes === #}
-                {% if is_representante %}
-                <li>
-                    <a href="{% url 'finanzas:mis_pagos' %}"
-                       class="text-white hover:text-fdm-red font-semibold transition duration-300 px-2 py-1 rounded hover:bg-white/10">
-                        Mis Pagos
-                    </a>
+                        {% if is_admin_total or is_tesoreria or is_coord_general %}
+                        <a href="{% url 'finanzas:bandeja' %}"
+                        class="block px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-fdm-blue/10 hover:text-fdm-blue dark:hover:bg-fdm-blue/20 dark:hover:text-blue-400 transition-colors">
+                            Bandeja de Pagos
+                        </a>
+                        {% endif %}
+                    </div>
                 </li>
                 {% endif %}
 
-                {# === Bandeja Pagos: tesorería y coord general === #}
-                {% if is_admin_total or is_tesoreria or is_coord_general %}
-                <li>
-                    <a href="{% url 'finanzas:bandeja' %}"
-                       class="text-white hover:text-fdm-red font-semibold transition duration-300 px-2 py-1 rounded hover:bg-white/10">
-                        Bandeja Pagos
-                    </a>
-                </li>
-                {% endif %}
-
-                {# === Admin Django: solo superuser === #}
+                {# === Admin Django (botón rojo destacado) === #}
                 {% if is_admin_total %}
                 <li>
                     <a href="/admin/"
-                       class="bg-fdm-red text-white px-4 py-2 rounded-md hover:bg-fdm-red-dark transition duration-300 font-semibold shadow-md">
+                    class="bg-fdm-red text-white px-4 py-2 rounded-md hover:bg-fdm-red-dark transition duration-300 font-semibold shadow-md inline-block">
                         Admin
                     </a>
                 </li>
                 {% endif %}
 
+                {# === Cerrar sesión === #}
                 {% if user.is_authenticated %}
                 <li>
                     <form method="post" action="{% url 'logout' %}" class="inline">
                         {% csrf_token %}
                         <button type="submit"
-                                class="flex items-center gap-1 text-white hover:text-red-200 font-semibold transition duration-300 px-2 py-1 rounded hover:bg-white/10">
+                                class="flex items-center gap-1.5 text-white hover:text-red-200 font-semibold transition duration-300 px-3 py-2 rounded-md hover:bg-white/15 min-h-[40px]">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                             </svg>
                             <span class="hidden sm:inline">Cerrar Sesión</span>
                         </button>
@@ -132,10 +177,135 @@
                 </li>
                 {% endif %}
 
+                {# === Toggle tema === #}
                 <li>
-                    <button @click="darkMode = !darkMode; if(darkMode){ document.documentElement.classList.add('dark'); localStorage.theme = 'dark'; } else { document.documentElement.classList.remove('dark'); localStorage.theme = 'light'; }" class="p-2 rounded-lg hover:bg-white/10 dark:hover:bg-slate-800 transition-colors">
-                        <span x-show="!darkMode">🌙</span>
-                        <span x-show="darkMode" x-cloak>☀️</span>
+                    <button @click="darkMode = !darkMode; if(darkMode){ document.documentElement.classList.add('dark'); localStorage.theme = 'dark'; } else { document.documentElement.classList.remove('dark'); localStorage.theme = 'light'; }"
+                            class="p-2 rounded-lg hover:bg-white/15 dark:hover:bg-slate-800 transition-colors text-white min-w-[40px] min-h-[40px] flex items-center justify-center"
+                            aria-label="Toggle theme">
+                        <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
+                        </svg>
+                        <svg x-show="darkMode" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/>
+                        </svg>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Navegación Móvil (colapsable con Alpine.js, visible en md:hidden) -->
+        <nav x-show="mobileMenuOpen" 
+             @click.away="mobileMenuOpen = false"
+             @keydown.window.escape="mobileMenuOpen = false"
+             @click="mobileMenuOpen = false"
+             x-transition:enter="transition ease-out duration-150"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-100"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-2"
+             class="md:hidden w-full border-t border-white/10 mt-2 pt-2"
+             x-cloak>
+            <ul class="flex flex-col gap-1.5">
+                <li>
+                    <a href="{% url 'dashboard' %}"
+                       class="text-white hover:text-white font-semibold transition duration-200 px-4 py-3 rounded-md hover:bg-white/15 block min-h-[44px]">
+                        Inicio
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'atleta_list' %}"
+                       class="text-white hover:text-white font-semibold transition duration-200 px-4 py-3 rounded-md hover:bg-white/15 block min-h-[44px]">
+                        {% if is_representante and not is_admin_total and not is_tesoreria and not is_coord_general and not is_coord_deportivo and not is_entrenador %}
+                            Mi Atleta
+                        {% else %}
+                            Atletas
+                        {% endif %}
+                    </a>
+                </li>
+                {% if is_admin_total or is_coord_general or is_coord_deportivo or is_tesoreria %}
+                <li>
+                    <a href="{% url 'representante_list' %}"
+                       class="text-white hover:text-white font-semibold transition duration-200 px-4 py-3 rounded-md hover:bg-white/15 block min-h-[44px]">
+                        Representantes
+                    </a>
+                </li>
+                {% endif %}
+                <li>
+                    <a href="{% url 'partido_list' %}"
+                       class="text-white hover:text-white font-semibold transition duration-200 px-4 py-3 rounded-md hover:bg-white/15 block min-h-[44px]">
+                        Partidos
+                    </a>
+                </li>
+                {% if is_admin_total or is_coord_general or is_coord_deportivo or is_entrenador %}
+                <li>
+                    <a href="{% url 'entrenador_list' %}"
+                       class="text-white hover:text-white font-semibold transition duration-200 px-4 py-3 rounded-md hover:bg-white/15 block min-h-[44px]">
+                        Cuerpo Técnico
+                    </a>
+                </li>
+                {% endif %}
+                {% if is_admin_total or is_coord_general or is_coord_deportivo or is_entrenador %}
+                <li>
+                    <a href="{% url 'estadisticas_panel' %}"
+                       class="text-white hover:text-white font-semibold transition duration-200 px-4 py-3 rounded-md hover:bg-white/15 block min-h-[44px]">
+                        Estadísticas
+                    </a>
+                </li>
+                {% endif %}
+                {% if is_representante %}
+                <li>
+                    <a href="{% url 'finanzas:mis_pagos' %}"
+                       class="text-white hover:text-white font-semibold transition duration-200 px-4 py-3 rounded-md hover:bg-white/15 block min-h-[44px]">
+                        Mis Pagos
+                    </a>
+                </li>
+                {% endif %}
+                {% if is_admin_total or is_tesoreria or is_coord_general %}
+                <li>
+                    <a href="{% url 'finanzas:bandeja' %}"
+                       class="text-white hover:text-white font-semibold transition duration-200 px-4 py-3 rounded-md hover:bg-white/15 block min-h-[44px]">
+                        Bandeja Pagos
+                    </a>
+                </li>
+                {% endif %}
+                {% if is_admin_total %}
+                <li>
+                    <a href="/admin/"
+                       class="bg-fdm-red text-white px-4 py-3 rounded-md hover:bg-fdm-red-dark transition duration-300 font-semibold shadow-md block text-center min-h-[44px]">
+                        Admin
+                    </a>
+                </li>
+                {% endif %}
+                {% if user.is_authenticated %}
+                <li>
+                    <form method="post" action="{% url 'logout' %}" class="w-full">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="flex items-center justify-start gap-1.5 text-white hover:text-red-200 font-semibold transition duration-200 px-4 py-3 rounded-md hover:bg-white/15 w-full text-left min-h-[44px]">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            <span>Cerrar Sesión</span>
+                        </button>
+                    </form>
+                </li>
+                {% endif %}
+                <li>
+                    <button @click.stop="darkMode = !darkMode; if(darkMode){ document.documentElement.classList.add('dark'); localStorage.theme = 'dark'; } else { document.documentElement.classList.remove('dark'); localStorage.theme = 'light'; }" 
+                            class="w-full flex items-center justify-start gap-2.5 px-4 py-3 rounded-md hover:bg-white/15 transition-colors text-white min-h-[44px]"
+                            aria-label="Toggle theme">
+                        <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                        <svg x-show="darkMode" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                        </svg>
+                        <span x-show="!darkMode">Modo Oscuro</span>
+                        <span x-show="darkMode" x-cloak>Modo Claro</span>
                     </button>
                 </li>
             </ul>
@@ -152,15 +322,15 @@
     <!-- Sistema de mensajes con soporte para success, error, warning e info -->
     {% if messages %}
         {% for message in messages %}
-            <div class="mb-4 px-4 py-3 rounded-lg shadow-sm
+            <div class="mb-4 px-4 py-3 rounded-lg shadow-sm border
                 {% if message.tags == 'success' %}
-                    bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700
+                    bg-[#d1fae5] text-[#065f46] border-[#10b981] dark:bg-[#065f46]/20 dark:text-[#a7f3d0] dark:border-[#059669]
                 {% elif message.tags == 'error' %}
-                    bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700
+                    bg-[#fee2e2] text-[#991b1b] border-[#C41E3A] dark:bg-[#9b1830]/20 dark:text-[#fecaca] dark:border-[#C41E3A]
                 {% elif message.tags == 'warning' %}
-                    bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700
+                    bg-[#fef3c7] text-[#92400e] border-[#f59e0b] dark:bg-[#78350f]/20 dark:text-[#fef08a] dark:border-[#d97706]
                 {% else %}
-                    bg-blue-100 text-blue-800 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700
+                    bg-[#e0f2fe] text-[#1E4380] border-[#1E4380] dark:bg-[#142D5A]/20 dark:text-[#bfdbfe] dark:border-[#1E4380]
                 {% endif %}
             " role="alert">
                 <span class="font-medium">

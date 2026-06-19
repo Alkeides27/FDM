@@ -29,6 +29,11 @@ docs
 
 # Agent config (local only)
 .agent/
+.gemini
+.impeccable
+.agents
+docs
+skills-lock.json
 
 # Logs
 logs/*
@@ -37,3 +42,5 @@ logs/*
 # Others
 PRD v2.1.md
 PRD v3.md
+PRODUCT.md
+DESIGN.md
